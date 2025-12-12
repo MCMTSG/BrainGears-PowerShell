@@ -210,6 +210,10 @@ Function Uninstall-Automate {
     Date           : 04/02/2020
     Changes        : Add $Automate.Service -eq $null
                      If the service still exists, the installation is failing with Exit Code 1638. 
+
+    Version        : 1.2    
+    Date           : 04/02/2020
+    Changes        : The Agent_Uninstall.exe now requires separate execution of Uninstall.exe
                      
 .EXAMPLE
     Uninstall-Automate [-Silent]
@@ -240,7 +244,8 @@ Write-Debug "Checking if Automate Installed"
 Confirm-Automate -Silent -Verbose:$Verbose
     If (($Global:Automate.InstFolder) -or ($Global:Automate.InstRegistry) -or (!($Global:Automate.Service -eq $Null)) -or ($Force)) {
     $Filename = [System.IO.Path]::GetFileName($DownloadPath)
-    $SoftwareFullPath = "$($SoftwarePath)\$Filename"
+    $SoftwareFullPath = Join-Path -Path $SoftwarePath -ChildPath $FileName
+    $UninstallPath = Join-Path $SoftwarePath "Uninstall.exe"
     If (!(Test-Path $SoftwarePath)) {New-Item -Path $SoftwarePath -ItemType Directory | Out-Null}
     Set-Location $SoftwarePath
     If ((Test-Path $SoftwareFullPath)) {Remove-Item $SoftwareFullPath | Out-Null}
@@ -250,14 +255,26 @@ Confirm-Automate -Silent -Verbose:$Verbose
     Write-Verbose "Closing Open Applications and Stopping Services"
     Stop-Process -Name "ltsvcmon","lttray","ltsvc","ltclient" -Force 
     Stop-Service ltservice,ltsvcmon -Force
+    Remove-Item -Path (Join-Path $SoftwarePath "Uninstall.exe") -ea 0
+    Remove-Item -Path (Join-Path $SoftwarePath "Uninstall.exe.config") -ea 0
     $UninstallExitCode = (Start-Process "cmd" -ArgumentList "/c $($SoftwareFullPath)" -NoNewWindow -Wait -PassThru).ExitCode
     If (!$Silent) {
         If ($UninstallExitCode -eq 0) {
-          # Write-Host "The Automate Agent Uninstaller Executed Without Errors" -ForegroundColor Green
+          # Write-Host "The Automate Agent Uninstaller Extracted Errors" -ForegroundColor Green
             Write-Verbose "The Automate Agent Uninstaller Executed Without Errors"
         } Else {
             Write-Host "Automate Uninstall Exit Code: $($UninstallExitCode)" -ForegroundColor Red
             Write-Verbose "Automate Uninstall Exit Code: $($UninstallExitCode)"
+        }
+    }
+    $UninstallExitCode2 = (Start-Process "cmd" -ArgumentList "/c $($UninstallPath)" -NoNewWindow -Wait -PassThru).ExitCode
+    If (!$Silent) {
+        If ($UninstallExitCode2 -eq 0) {
+          # Write-Host "The Automate Agent Uninstaller Executed Without Errors" -ForegroundColor Green
+            Write-Verbose "The Automate Agent Uninstaller Executed Without Errors"
+        } Else {
+            Write-Host "Automate Uninstall Exit Code: $($UninstallExitCode2)" -ForegroundColor Red
+            Write-Verbose "Automate Uninstall Exit Code: $($UninstallExitCode2)"
         }
     }
     Write-Verbose "Checking For Removal - Loop 5X"
@@ -3018,3 +3035,4 @@ Write-Verbose 'Loading values from "HKLM:\SOFTWARE\LabTech\Service"'
         }
     }
 } # End Set-AutomateRestore
+
