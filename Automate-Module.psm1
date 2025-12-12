@@ -257,7 +257,7 @@ Confirm-Automate -Silent -Verbose:$Verbose
     Stop-Service ltservice,ltsvcmon -Force
     Remove-Item -Path (Join-Path $SoftwarePath "Uninstall.exe") -ea 0
     Remove-Item -Path (Join-Path $SoftwarePath "Uninstall.exe.config") -ea 0
-    $UninstallExitCode = (Start-Process "cmd" -ArgumentList "/c $($SoftwareFullPath)" -NoNewWindow -Wait -PassThru).ExitCode
+    $UninstallExitCode = (Start-Process "cmd" -ArgumentList "/c $($SoftwareFullPath)" -NoNewWindow -Wait -PassThru -RedirectStandardOutput "NUL").ExitCode
     If (!$Silent) {
         If ($UninstallExitCode -eq 0) {
           # Write-Host "The Automate Agent Uninstaller Extracted Errors" -ForegroundColor Green
@@ -267,7 +267,7 @@ Confirm-Automate -Silent -Verbose:$Verbose
             Write-Verbose "Automate Uninstall Exit Code: $($UninstallExitCode)"
         }
     }
-    $UninstallExitCode2 = (Start-Process "cmd" -ArgumentList "/c $($UninstallPath)" -NoNewWindow -Wait -PassThru).ExitCode
+    $UninstallExitCode2 = (Start-Process "cmd" -ArgumentList "/c $($UninstallPath)" -NoNewWindow -Wait -PassThru -RedirectStandardOutput "NUL").ExitCode
     If (!$Silent) {
         If ($UninstallExitCode2 -eq 0) {
           # Write-Host "The Automate Agent Uninstaller Executed Without Errors" -ForegroundColor Green
